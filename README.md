@@ -7,7 +7,6 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 | Package    | Files                          | What it configures           |
 |------------|--------------------------------|------------------------------|
 | `zsh`      | `.zshrc`, `.zprofile`          | Shell options, prompt, aliases, PATH |
-| `ghostty`  | `.config/ghostty/config`       | Catppuccin Mocha theme, keybindings, splits |
 | `gh`       | `.config/gh/config.yml`        | GitHub CLI settings & aliases |
 
 ## Setup on a new machine
@@ -44,7 +43,7 @@ cp ~/.vimrc ~/dotfiles/vim/.vimrc
 cd ~/dotfiles && stow vim
 
 # Remove a package's symlinks
-cd ~/dotfiles && stow -D ghostty
+cd ~/dotfiles && stow -D gh
 
 # Re-link everything
 cd ~/dotfiles && ./install.sh
