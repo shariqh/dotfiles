@@ -11,7 +11,7 @@ fi
 
 # Stow each package (--adopt pulls existing files into the repo, then git restore)
 echo "Linking dotfiles..."
-for pkg in zsh ghostty gh; do
+for pkg in zsh gh; do
   echo "  $pkg"
   stow -d "$DOTFILES_DIR" -t "$HOME" --adopt "$pkg" 2>&1 || true
 done
