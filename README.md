@@ -13,7 +13,7 @@ Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 ```bash
 # 1. Install prerequisites
-brew install stow eza bat
+brew install stow eza bat fnm
 
 # 2. Clone and link
 git clone git@github.com:shariqh/dotfiles.git ~/dotfiles
@@ -21,7 +21,7 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-`install.sh` symlinks each package into `~/` via Stow. Existing files are adopted into the repo, then restored to the repo version.
+`install.sh` symlinks each package into `~/` via Stow. Existing files are adopted into the repo, then restored to the repo version. The script refuses to run with a dirty working tree (the post-adopt `git checkout` would otherwise wipe uncommitted edits).
 
 ## Machine-specific config
 
@@ -30,6 +30,16 @@ Anything that shouldn't be shared across machines goes in `~/.zshrc.local`, whic
 - Docker Desktop completions
 - Paths to local dev tooling
 - Work-specific env vars
+
+Secrets (e.g. the 1Password service-account token used by the `ntn` wrappers in `.zshrc`) live in `~/.zshenv` — also untracked, `chmod 600`.
+
+## Optional runtime dependencies
+
+Tracked `.zshrc` registers integrations only when the underlying tool is present, so missing tools degrade silently. Install on demand:
+
+- `gcloud` — Google Cloud SDK (`brew install --cask google-cloud-sdk`)
+- `terraform` — `brew install terraform`
+- `op` — 1Password CLI, required by the `ntn-*` Notion wrappers (`brew install --cask 1password-cli`)
 
 ## Managing dotfiles
 

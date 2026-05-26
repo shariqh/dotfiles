@@ -9,6 +9,15 @@ if ! command -v stow &>/dev/null; then
   brew install stow
 fi
 
+# Refuse to run with uncommitted changes — the post-stow `git checkout` below
+# would wipe them out. Commit or stash first.
+cd "$DOTFILES_DIR"
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "Error: working tree has uncommitted changes. Commit or stash before running install.sh."
+  echo "       (otherwise the post-adopt 'git checkout' would discard them.)"
+  exit 1
+fi
+
 # Stow each package (--adopt pulls existing files into the repo, then git restore)
 echo "Linking dotfiles..."
 for pkg in zsh gh; do
@@ -17,7 +26,6 @@ for pkg in zsh gh; do
 done
 
 # Restore repo versions (--adopt may have pulled in local diffs)
-cd "$DOTFILES_DIR"
 git checkout -- . 2>/dev/null || true
 
 echo ""
