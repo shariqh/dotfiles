@@ -1,7 +1,7 @@
 # ─── General Settings ────────────────────────────────────────────────
 # Default directory — only auto-cd when shell starts at $HOME
 # (avoids clobbering cwd when launched from Solo, IDEs, etc.)
-[[ "$PWD" == "$HOME" ]] && cd ~/dev
+[[ "$PWD" == "$HOME" && -d ~/dev ]] && cd ~/dev
 
 # History
 HISTFILE=~/.zsh_history
@@ -35,8 +35,16 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}" # colored completions
 
 # ─── Key Bindings ────────────────────────────────────────────────────
 bindkey -e                     # emacs-style keybindings (default on macOS)
-bindkey '^[[A' history-search-backward   # up arrow: search history
-bindkey '^[[B' history-search-forward    # down arrow: search history
+# Up/down: search history by the WHOLE text typed before the cursor (not just
+# the first word). So `claude --resume`<Up> cycles only `claude --resume …`
+# entries. Falls back to normal line motion inside multi-line buffers.
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search    # up arrow
+bindkey '^[[B' down-line-or-beginning-search  # down arrow
+bindkey '^[OA' up-line-or-beginning-search    # up arrow (application cursor mode)
+bindkey '^[OB' down-line-or-beginning-search  # down arrow (application cursor mode)
 
 # ─── Prompt ──────────────────────────────────────────────────────────
 autoload -Uz vcs_info
@@ -79,6 +87,39 @@ command -v terraform &>/dev/null && complete -o nospace -C "$(command -v terrafo
 # Google Cloud SDK (PATH + completion)
 [ -f '/opt/homebrew/share/google-cloud-sdk/path.zsh.inc' ] && . '/opt/homebrew/share/google-cloud-sdk/path.zsh.inc'
 [ -f '/opt/homebrew/share/google-cloud-sdk/completion.zsh.inc' ] && . '/opt/homebrew/share/google-cloud-sdk/completion.zsh.inc'
+
+# GitHub CLI completion (commands, subcommands, flag names).
+# Note: gh does NOT natively complete repo names for --repo/-R.
+command -v gh &>/dev/null && eval "$(gh completion -s zsh)"
+
+# Add repo-name completion after --repo/-R (gh has no native support). Serves
+# your own repos plus those of any orgs in $GH_REPO_COMPLETE_ORGS, cached daily
+# so Tab stays instant; force a refresh with `rm ~/.cache/gh-repo-list`.
+# Delegates everything else to gh's own completer (_gh) so it survives gh
+# upgrades. Set the org list (work-specific) in ~/.zshrc.local, e.g.:
+#   GH_REPO_COMPLETE_ORGS=(Some-Org Another-Org)
+typeset -ga GH_REPO_COMPLETE_ORGS
+if command -v gh &>/dev/null; then
+  _gh_with_repos() {
+    if [[ ${words[CURRENT-1]} == (--repo|-R) ]]; then
+      local cache="${XDG_CACHE_HOME:-$HOME/.cache}/gh-repo-list"
+      [[ -d ${cache:h} ]] || mkdir -p ${cache:h}
+      local -a fresh=( $cache(Nmh-24) )          # exists & <24h old?
+      if (( ! ${#fresh} )); then
+        { gh repo list --limit 300 --json nameWithOwner -q '.[].nameWithOwner'
+          local org
+          for org in $GH_REPO_COMPLETE_ORGS; do
+            gh repo list "$org" --limit 300 --json nameWithOwner -q '.[].nameWithOwner'
+          done
+        } >| $cache 2>/dev/null
+      fi
+      compadd -- "${(@f)$(<$cache 2>/dev/null)}"
+      return
+    fi
+    _gh
+  }
+  compdef _gh_with_repos gh
+fi
 
 # Notion CLI (ntn) — per-workspace PAT wrappers backed by 1Password.
 # `op read` resolves silently via the 1Password Service Account token set in
@@ -123,7 +164,53 @@ compinit
 # dev-setup (no-op if the directory isn't present; (N) prevents an unmatched-glob error)
 for f in /Users/shariqhirani/dev/dev-setup/home/.zshrc.d/*.zsh(N); do [[ -r "$f" ]] && source "$f"; done
 
+# ─── Autocomplete & interactive enhancements ─────────────────────────
+# Fish-style inline suggestions from history — the greyed-out completion
+# appears as you type; accept the whole thing with → (or End), or accept
+# one word with Ctrl-→. Just keep typing to ignore it.
+[[ -r /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+  source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# fzf: fuzzy Ctrl-R history search overlay, Ctrl-T file picker, Alt-C cd.
+# `fzf --zsh` emits the key-bindings + completion setup (fzf ≥ 0.48).
+command -v fzf &>/dev/null && eval "$(fzf --zsh)"
+
+# Move the cursor over the next *shell word*: treats a quoted string like
+# "foo bar" (or 'foo bar') as ONE token instead of stranding on the opening
+# quote. Registered with the autosuggestions plugin so its partial-accept
+# logic accepts exactly this much of the suggestion.
+_forward-shell-word() {
+  emulate -L zsh
+  local rest=${BUFFER[CURSOR+1,-1]}
+  local pat='^[[:space:]]*("[^"]*"?|'\''[^'\'']*'\''?|[^[:space:]]+)'
+  if [[ $rest =~ $pat ]]; then (( CURSOR += ${#MATCH} )); else zle forward-word; fi
+}
+zle -N _forward-shell-word
+ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS+=(_forward-shell-word)
+
+# Tab: if an inline suggestion is showing, accept its next shell word (so a
+# quoted arg comes in whole); otherwise fall through to normal completion
+# (fzf's if present). Space always stays a literal space. Bound AFTER fzf.
+_accept_suggested_word_or_complete() {
+  if [[ -n "$POSTDISPLAY" ]]; then
+    zle _forward-shell-word
+  elif (( ${+widgets[fzf-completion]} )); then
+    zle fzf-completion
+  else
+    zle expand-or-complete
+  fi
+}
+zle -N _accept_suggested_word_or_complete
+bindkey '^I' _accept_suggested_word_or_complete   # ^I = Tab
+
 # ─── Local overrides ─────────────────────────────────────────────────
 # Machine-specific config (secrets, personal paths, host-only aliases).
 # Not tracked in the dotfiles repo; sourced last so it can override anything above.
 [[ -r ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# ─── Syntax highlighting ─────────────────────────────────────────────
+# MUST be sourced last: it wraps every ZLE widget defined above (including
+# our history-search bindings and autosuggestions) to colorize the command
+# line as you type — valid commands green, unknown ones red.
+[[ -r /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+  source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
