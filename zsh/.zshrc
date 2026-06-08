@@ -46,6 +46,12 @@ bindkey '^[[B' down-line-or-beginning-search  # down arrow
 bindkey '^[OA' up-line-or-beginning-search    # up arrow (application cursor mode)
 bindkey '^[OB' down-line-or-beginning-search  # down arrow (application cursor mode)
 
+# Word-by-word cursor movement. Esc-f / Esc-b (^[f/^[b) are already bound by
+# emacs mode; these add the CSI sequences iTerm sends when Option/Control report
+# as a modifier (rather than Esc+), so Option+←/→ and Ctrl+←/→ jump by word.
+bindkey '^[[1;3C' forward-word  '^[[1;3D' backward-word   # Option + → / ←
+bindkey '^[[1;5C' forward-word  '^[[1;5D' backward-word   # Control + → / ←
+
 # ─── Prompt ──────────────────────────────────────────────────────────
 autoload -Uz vcs_info
 precmd() { vcs_info }
