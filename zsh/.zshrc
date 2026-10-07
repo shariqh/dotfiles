@@ -168,7 +168,7 @@ compinit
 # End of Docker CLI completions
 
 # dev-setup (no-op if the directory isn't present; (N) prevents an unmatched-glob error)
-for f in /Users/shariqhirani/dev/dev-setup/home/.zshrc.d/*.zsh(N); do [[ -r "$f" ]] && source "$f"; done
+for f in "$HOME/Development/dev-setup/home/.zshrc.d"/*.zsh(N); do [[ -r "$f" ]] && source "$f"; done
 
 # ─── Autocomplete & interactive enhancements ─────────────────────────
 # Fish-style inline suggestions from history — the greyed-out completion
