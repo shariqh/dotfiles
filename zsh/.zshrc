@@ -142,8 +142,8 @@ _ntn_with_pat() {
   NOTION_API_TOKEN="$token" command ntn "$@"
 }
 ntn-personal()  { _ntn_with_pat 'op://dev-env-vars/notion-personal/Claude Code MCP Access Token' '_NTN_TOK_PERSONAL' "$@"; }
-ntn-cwx-airn()  { _ntn_with_pat 'op://dev-env-vars/5pqlb26twvdfmlr3vviuxps2i4/shariq-pat-airn' '_NTN_TOK_AIRN'     "$@"; }
-ntn-cwx-pp()    { _ntn_with_pat 'op://dev-env-vars/5pqlb26twvdfmlr3vviuxps2i4/shariq-pat-pp'   '_NTN_TOK_PP'       "$@"; }
+ntn-cwx-airn()  { _ntn_with_pat 'op://dev-env-vars/v53d37ts75gqajp6mhxrzc444a/shariq-pat-airn' '_NTN_TOK_AIRN' "$@"; }
+ntn-cwx-pp()    { _ntn_with_pat 'op://dev-env-vars/v53d37ts75gqajp6mhxrzc444a/shariq-pat-pp'   '_NTN_TOK_PP'   "$@"; }
 ntn-flush()     { unset _NTN_TOK_PERSONAL _NTN_TOK_AIRN _NTN_TOK_PP; echo "ntn: token cache cleared"; }
 
 # Quick todo: AI-categorized GitHub issue
