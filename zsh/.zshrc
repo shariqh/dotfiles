@@ -1,7 +1,7 @@
 # ─── General Settings ────────────────────────────────────────────────
 # Default directory — only auto-cd when shell starts at $HOME
 # (avoids clobbering cwd when launched from Solo, IDEs, etc.)
-[[ "$PWD" == "$HOME" && -d ~/dev ]] && cd ~/dev
+[[ "$PWD" == "$HOME" && -d ~/Development ]] && cd ~/Development
 
 # History
 HISTFILE=~/.zsh_history
