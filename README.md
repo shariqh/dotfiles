@@ -1,5 +1,7 @@
 # dotfiles
 
+> **Retired 2026-11-17.** Everything here now lives in [shariqh/dev-setup](https://github.com/shariqh/dev-setup), which sets up every Mac the same way: the shell in `home/.zshrc.d/`, `.zprofile`, and the GitHub CLI settings in `home/.config/gh/config.yml` (dev-setup #52, #54). This repo is archived and kept read-only for its history. To undo a stow install: `stow -D zsh gh` here, then run dev-setup's `install.sh --refresh-only`.
+
 Personal dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow/).
 
 > **Assumes macOS on Apple Silicon** — Homebrew at `/opt/homebrew`. On Intel macs the
